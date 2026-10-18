@@ -15,11 +15,11 @@ def save_trade(trade: TradeRequest):
 
     #Reject Maturity Date earlier than today
     if maturity_date < today:
-        raise ValueError("Maturity Date cannot be earlier than Today")
+        raise ValueError("Maturity Date cannot be earlier than Today.")
 
     # Create date in future is not valid
     if created_date > today:
-        raise ValueError("Created Date cannot be in the future")
+        raise ValueError("Created Date cannot be in the future.")
 
     # A trade that matures today is not yet expired.
     expired = 'Y' if maturity_date < today else 'N'
