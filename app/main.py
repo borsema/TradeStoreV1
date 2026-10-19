@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 
 from app.database import get_connection, create_tables
@@ -6,9 +7,12 @@ from app.services import save_trade, expire_matured_trade
 
 app = FastAPI(title='Trade Store API', version ="1.0.0")
 
-@app.on_event("startup")
+# @app.on_event("startup")
+@asynccontextmanager
 def startup():
     create_tables()
+
+
 
 @app.post("/trades",response_model = TradeResponse)
 def create_or_update_trade(trade: TradeRequest):
