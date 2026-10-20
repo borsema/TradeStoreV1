@@ -60,6 +60,15 @@ uvicorn app.main:app --reload
 API will be available at `http://127.0.0.1:8000`.  
 Interactive docs: `http://127.0.0.1:8000/docs`
 
+## Live Deployment
+
+The API is deployed on **Azure App Service** (Malaysia West).
+
+| | URL |
+|---|---|
+| Base URL | https://tsv1-bxcxcthgbadyc3ht.malaysiawest-01.azurewebsites.net |
+| Interactive Docs | https://tsv1-bxcxcthgbadyc3ht.malaysiawest-01.azurewebsites.net/docs |
+
 ## API Endpoints
 
 | Method | Path | Description |
