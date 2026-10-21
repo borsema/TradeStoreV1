@@ -7,7 +7,7 @@ import os
 
 BASE_URL = os.getenv(
     "API_BASE_URL",
-    "http://127.0.0.1:8000"
+    "https://tsv1-bxcxcthgbadyc3ht.malaysiawest-01.azurewebsites.net"
 )
 
 st.set_page_config(
