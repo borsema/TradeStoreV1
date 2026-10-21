@@ -38,6 +38,21 @@ def create_tables():
                 CREATE INDEX IF NOT EXISTS idx_trades_maturity
                 ON trades (maturity_date)
             """)
+
+
+        connection.execute("""
+                    CREATE TABLE IF NOT EXISTS anomaly_reviews (
+                        trade_id TEXT NOT NULL,
+                        version INTEGER NOT NULL,
+                        category TEXT NOT NULL,
+                        review_status TEXT NOT NULL
+                            CHECK (review_status IN ('SAFE', 'UNSAFE')),
+                        reason TEXT NOT NULL,
+                        reviewed_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                        PRIMARY KEY (trade_id, version, category)
+                    )
+                """)
+
         connection.commit()
     finally:
         connection.close()

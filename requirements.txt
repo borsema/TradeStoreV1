@@ -4,3 +4,4 @@ pytest
 httpx
 pydantic
 gunicorn
+scikit-learn
