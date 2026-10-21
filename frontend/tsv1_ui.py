@@ -16,11 +16,13 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("📈 Trade Store Management Dashboard")
+st.title("📈 Trade Store Management Dashboard (TSV1)")
 st.markdown("View stored trades, insert new trade records, or trigger business operations.")
 
 st.markdown("""
 <style>
+    /* Fix title cropping */
+    h1 { white-space: nowrap; overflow: visible; font-size: clamp(1.2rem, 2.5vw, 2rem) !important; }
     /* Top-level tabs — larger */
     .stTabs [data-baseweb="tab-list"] { gap: 16px; }
     .stTabs [data-baseweb="tab"] {
@@ -28,6 +30,9 @@ st.markdown("""
         font-weight: 900;
         padding: 24px 80px;
         letter-spacing: 0.05em;
+        height: auto;
+        overflow: visible;
+        white-space: nowrap;
     }
 
     /* Radio buttons (sub-sections) — compact */
