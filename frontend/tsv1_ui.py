@@ -1,9 +1,8 @@
 """Streamlit frontend dashboard for Trade Store V1."""
 import datetime
+import os
 import requests
 import streamlit as st
-
-import os
 
 BASE_URL = os.getenv(
     "API_BASE_URL",
@@ -22,7 +21,13 @@ st.markdown("View stored trades, insert new trade records, or trigger business o
 st.markdown("""
 <style>
     /* Fix title cropping */
-    h1 { white-space: nowrap; overflow: visible; font-size: clamp(1.2rem, 2.5vw, 2rem) !important; }
+    h1 {
+        white-space: nowrap;
+        overflow: visible;
+        font-size: clamp(1.2rem, 2.5vw, 2rem) !important;
+        line-height: 1.3 !important;
+        padding-bottom: 0.3rem;
+    }
     /* Top-level tabs — larger */
     .stTabs [data-baseweb="tab-list"] { gap: 16px; }
     .stTabs [data-baseweb="tab"] {
