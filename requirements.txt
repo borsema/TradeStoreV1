@@ -5,3 +5,5 @@ httpx
 pydantic
 gunicorn
 scikit-learn
+pandas
+numpy
