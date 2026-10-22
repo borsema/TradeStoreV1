@@ -11,7 +11,7 @@ router = APIRouter(prefix="/anomalies", tags=["Anomaly Detection"])
 
 class AnomalyReviewRequest(BaseModel):
     version: int
-    category: str = "UNSEEN_COUNTERPARTY"
+    category: str = "UNUSUAL_COUNTERPARTY_PORTFOLIO"
     review_status: Literal["SAFE", "UNSAFE"]
     reason: str
 
@@ -44,17 +44,14 @@ def get_trade_anomalies():
                 (
                     trade["trade_id"],
                     trade["version"],
-                    "UNSEEN_COUNTERPARTY"
-                    if result["reason"] == "Counterparty not seen in training data"
-                    else "UNSEEN_COUNTERPARTY"
-                    if result["reason"] == "Counterparty-portfolio pair not seen in training data"
-                    else "ISOLATION_FOREST"
+                    "UNUSUAL_COUNTERPARTY_PORTFOLIO"
                 )
             ).fetchone()
 
             result["review_status"] = review_row["review_status"] if review_row else None
             result["review_reason"] = review_row["reason"] if review_row else None
             result["reviewed_at"] = review_row["reviewed_at"] if review_row else None
+            result["category"] = "UNUSUAL_COUNTERPARTY_PORTFOLIO"
 
             anomalies.append(result)
 

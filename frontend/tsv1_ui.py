@@ -79,7 +79,7 @@ st.sidebar.markdown("---")
 st.sidebar.markdown(f"**Backend API:** `{BASE_URL}`")
 
 # ── Top-level Tabs ─────────────────────────────────────────────────────────────
-tab_tsv1, tab_anomaly, tab_future = st.tabs(["📈 TSV1", "🚨 Anomaly", "🔭 Future Scope"])
+tab_tsv1, tab_anomaly, tab_future = st.tabs(["📈 TSV1  ","  🚨 Anomaly  ","  🔭 Future Scope  "])
 
 
 # ══ TSV1 Tab ══════════════════════════════════════════════════════════════════
@@ -315,7 +315,7 @@ with tab_anomaly:
                 review_trade_id = st.text_input("Trade ID *", placeholder="e.g. TRD001")
                 review_version  = st.number_input("Version *", min_value=1, value=1, step=1)
             with col2:
-                review_category = st.selectbox("Category", ["UNSEEN_COUNTERPARTY", "ISOLATION_FOREST"])
+                review_category = st.selectbox("Category", ["UNUSUAL_COUNTERPARTY_PORTFOLIO"])
                 review_status   = st.selectbox("Review Status", ["SAFE", "UNSAFE"])
             review_reason = st.text_area("Reason *", placeholder="Explain why this trade is SAFE or UNSAFE")
             review_submitted = st.form_submit_button("Submit Review")
