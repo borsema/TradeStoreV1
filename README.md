@@ -8,7 +8,9 @@ A RESTful API for managing financial trades, built with **FastAPI** and **SQLite
 - Reject trades with a maturity date in the past
 - Reject incoming versions lower than the stored version
 - Mark matured trades as expired via a dedicated endpoint
-- CI pipeline with automated tests and Trivy security scan
+- ML-based anomaly detection for unusual counterparty-portfolio relationships
+- Anomaly review system to mark trades as SAFE or UNSAFE
+- CI/CD pipeline with automated tests and Trivy security scan
 
 ## Tech Stack
 
@@ -17,9 +19,12 @@ A RESTful API for managing financial trades, built with **FastAPI** and **SQLite
 | Framework | FastAPI |
 | Database | SQLite3 |
 | Validation | Pydantic v2 |
-| Server | Uvicorn |
+| ML | scikit-learn (Isolation Forest) |
+| Data Processing | Pandas, NumPy |
+| Server | Uvicorn / Gunicorn |
 | Testing | Pytest + HTTPX |
-| CI | GitHub Actions |
+| CI/CD | GitHub Actions |
+| Deployment | Azure App Service |
 
 ## Project Structure
 
@@ -29,7 +34,6 @@ TradeStoreV1/
 │   ├── main.py        # FastAPI routes
 │   ├── services.py    # Business logic
 │   ├── schemas.py     # Pydantic request/response models
-│   ├── models.py      # Trade dataclass
 │   └── database.py    # SQLite connection & table setup
 ├── tests/
 │   ├── test_trades.py # Unit tests (service layer)
@@ -71,12 +75,22 @@ The API is deployed on **Azure App Service** (Malaysia West).
 
 ## API Endpoints
 
+### Trade Management
+
 | Method | Path | Description |
 |--------|------|-------------|
 | `POST` | `/trades` | Create or update a trade |
 | `GET` | `/trades` | List all trades |
 | `GET` | `/trades/{trade_id}` | Get a trade by ID |
 | `POST` | `/trades/expire` | Mark matured trades as expired |
+
+### Anomaly Detection
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/anomalies` | Scan all trades for unusual patterns |
+| `POST` | `/anomalies/{trade_id}/review` | Review and classify an anomaly |
+| `GET` | `/anomalies/reviews` | Get all anomaly reviews |
 
 ### Trade Payload
 
