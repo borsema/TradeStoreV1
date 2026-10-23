@@ -1,9 +1,10 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
+import sqlite3
 
 from app.database import get_connection, create_tables
 from app.schemas import TradeRequest, TradeResponse
-from app.services import save_trade, expire_matured_trade
+from app.services import save_trade, expire_matured_trade,delete_trade as delete_trade_service, store_trades_bulk
 from app.routers import anomaly
 
 app = FastAPI(title='Trade Store API', version="1.0.0")
@@ -41,6 +42,42 @@ def expire_trade():
         "message": "Expiry check completed",
         "trades_marked_expired": count
     }
+
+@app.delete("/trades/{trade_id}")
+def delete_trade(trade_id: str):
+    deleted = delete_trade_service(trade_id)
+    if not deleted:
+        raise HTTPException(
+            status_code=404,
+            detail="Trade not found"
+        )
+    return {"message": "Trade deleted", "deleted": deleted}
+
+
+@app.post("/trades/bulk")
+def bulk_insert_trades(trades: list[TradeRequest]):
+    """Insert multiple new trades in one transaction."""
+    try:
+        count = store_trades_bulk(trades)
+        return {
+            "message": "Trades inserted successfully",
+            "inserted_count": count,
+        }
+
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+    except sqlite3.IntegrityError as exc:
+        if "UNIQUE constraint failed" in str(exc):
+            raise HTTPException(
+                status_code=409,
+                detail="A trade with this trade_id already exists",
+            ) from exc
+
+        raise HTTPException(
+            status_code=400,
+            detail="Bulk insert failed; no trades were inserted",
+        ) from exc
 
 # Anomaly router included before the wildcard /trades/{trade_id}
 app.include_router(anomaly.router)

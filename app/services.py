@@ -1,44 +1,75 @@
+
 from datetime import date, datetime
+
 from app.database import get_connection
 from app.schemas import TradeRequest
 
-def parse_date(date_text):
+
+def parse_date(date_text: str) -> date:
     """Convert DD/MM/YYYY text into a Python date."""
     return datetime.strptime(date_text, "%d/%m/%Y").date()
 
-def save_trade(trade: TradeRequest):
-    # trade = TradeRequest
-    """Validate and insert or update a trade."""
-    today = date.today() #date(2026, 10, 16)  #date.today()
+
+def validate_trade(
+    trade: TradeRequest,
+    existing_version: None,
+) -> None:
+    """Validate trade fields, dates, and version rules."""
+
+    if not trade.trade_id.strip():
+        raise ValueError("TRD-003: Trade ID cannot be empty.")
+
+    if trade.version < 1:
+        raise ValueError("TRD-004: Version must be at least 1.")
+
+    today = date.today()
+
     maturity_date = parse_date(trade.maturity_date)
-    created_date =parse_date(trade.created_date)
-
-    #Reject Maturity Date earlier than today
     if maturity_date < today:
-        raise ValueError("Maturity Date cannot be earlier than Today.")
+        raise ValueError(
+            "TRD-001: Maturity Date cannot be earlier than Today."
+        )
 
-    # Create date in future is not valid
+    created_date = parse_date(trade.created_date)
     if created_date > today:
-        raise ValueError("Created Date cannot be in the future.")
+        raise ValueError(
+            "TRD-002: Created Date cannot be in the future."
+        )
 
-    # A trade that matures today is not yet expired.
-    expired = 'Y' if maturity_date < today else 'N'
+    if existing_version is not None and trade.version < existing_version:
+        raise ValueError(
+            f"TRD-005: Incoming version {trade.version} is lower "
+            f"than existing version {existing_version}."
+        )
+
+
+def save_trade(trade: TradeRequest):
+    """Validate and insert or update a trade."""
 
     connection = get_connection()
 
     try:
+        # First, check whether this trade already exists.
         existing_trade = connection.execute(
             "SELECT version FROM trades WHERE trade_id = ?",
-            (trade.trade_id,)
+            (trade.trade_id,),
         ).fetchone()
 
-        if existing_trade is not None:
-            existing_version = existing_trade["version"]
+        # Get the existing version, if available.
+        existing_version = (
+            existing_trade["version"]
+            if existing_trade is not None
+            else None
+        )
 
-            if trade.version < existing_version:
-                raise ValueError(
-                    f"Incoming version {trade.version} is lower than existing version {existing_version}"
-                )
+        # Perform all business validations in one function.
+        validate_trade(trade, existing_version)
+
+        # A trade maturing today is not yet expired.
+        maturity_date = parse_date(trade.maturity_date)
+        expired = "Y" if maturity_date < date.today() else "N"
+
+        # Insert a new trade or update an existing trade.
         connection.execute(
             """
             INSERT INTO trades (
@@ -67,49 +98,109 @@ def save_trade(trade: TradeRequest):
                 trade.maturity_date,
                 trade.created_date,
                 expired,
-            )
+            ),
         )
+
         connection.commit()
+
         saved_trade = connection.execute(
             "SELECT * FROM trades WHERE trade_id = ?",
-        (trade.trade_id,)
+            (trade.trade_id,),
         ).fetchone()
-        print("Saved_trade", dict(saved_trade))
+
         return dict(saved_trade)
+
+    except Exception:
+        connection.rollback()
+        raise
+
     finally:
         connection.close()
 
+
+
 def expire_matured_trade():
-    """Mark trade whose maturity date has passed or expired."""
-    today = date.today() # date(2026,10,16) # date.today()
+    """Mark trades as expired when their maturity date has passed."""
+
+    today = date.today()  #date(2026,10, 28)#
     connection = get_connection()
 
     try:
         rows = connection.execute(
-            "SELECT trade_id, maturity_date, expired FROM trades"
+            "SELECT trade_id, maturity_date FROM trades WHERE expired = 'N'"
         ).fetchall()
 
-        expired_count = 0
+        expired_trade_ids = [
+            row["trade_id"]
+            for row in rows
+            if parse_date(row["maturity_date"]) < today
+        ]
 
-        for row in rows:
-            print(row)
-            maturity_date = parse_date(row["maturity_date"])
-            print("MAturity date", maturity_date)
-            print("Todays date", today)
-            if maturity_date < today and row["expired"] != "Y":
-                connection.execute(
-                    "UPDATE trades SET expired = 'Y' where trade_id = ?",
-                    (row["trade_id"],   )
-                )
-                expired_count += 1
+        if expired_trade_ids:
+            placeholders = ",".join("?" for _ in expired_trade_ids)
 
-            connection.commit()
+            connection.execute(
+                f"""
+                UPDATE trades
+                SET expired = 'Y'
+                WHERE expired = 'N'
+                  AND trade_id IN ({placeholders})
+                """,
+                expired_trade_ids,
+            )
 
-        return expired_count
+        connection.commit()
+        return len(expired_trade_ids)
+
+    except Exception:
+        connection.rollback()
+        raise
 
     finally:
         connection.close()
 
 
 
+def delete_trade(trade_id: str) -> bool:
+    """Delete a trade by its ID."""
 
+    connection = get_connection()
+
+    try:
+        cursor = connection.execute(
+            "DELETE FROM trades WHERE trade_id = ?",
+            (trade_id,),
+        )
+        connection.commit()
+        return cursor.rowcount > 0
+
+    except Exception:
+        connection.rollback()
+        raise
+
+    finally:
+        connection.close()
+
+
+def store_trades_bulk(trades: list[TradeRequest]) -> dict:
+    """Validate and save multiple trades, collecting individual errors."""
+
+    stored = []
+    errors = []
+
+    for trade in trades:
+        try:
+            # save_trade performs validation and saving.
+            save_trade(trade)
+            stored.append(trade.trade_id)
+
+        except (ValueError, Exception) as exc:
+            errors.append({
+                "trade_id": trade.trade_id,
+                "error": str(exc),
+            })
+
+    return {
+        "success_count": len(stored),
+        "errors": errors,
+    }
