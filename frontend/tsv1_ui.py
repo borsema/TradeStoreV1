@@ -88,7 +88,12 @@ with tab_tsv1:
     # ── Section selector (operations only) ────────────────────────────────────
     tsv1_section = st.radio(
         "Select Section",
-        ["📋 View Trades", "➕ Insert / Update Trade", "🔍 Get Trade by ID"],
+        [
+            "📋 View Trades",
+            "➕ Insert / Update Trade",
+            "🔍 Get Trade by ID",
+            "🗑️ Delete Trade",
+        ],
         horizontal=True,
         key="tsv1_radio"
     )
@@ -149,6 +154,46 @@ with tab_tsv1:
                         st.error(f"❌ Error ({resp.status_code}): {detail}")
                 except Exception as e:
                     st.error(f"Failed to submit trade: {e}")
+
+    # ── Get Trade by ID ────────────────────────────────────────────────────────
+    elif tsv1_section == "🔍 Get Trade by ID":
+        st.subheader("Get Trade by ID")
+        search_id = st.text_input("Enter Trade ID", placeholder="e.g. TRD001")
+        if st.button("Search"):
+            if search_id:
+                try:
+                    resp = requests.get(f"{BASE_URL}/trades/{search_id.strip()}")
+                    if resp.status_code == 200:
+                        st.json(resp.json())
+                    elif resp.status_code == 404:
+                        st.warning("Trade not found.")
+                    else:
+                        st.error(f"Error {resp.status_code}: {resp.text}")
+                except Exception as e:
+                    st.error(f"Failed to connect: {e}")
+            else:
+                st.warning("Please enter a Trade ID.")
+
+    # ── Delete Trade ───────────────────────────────────────────────────────────
+    elif tsv1_section == "🗑️ Delete Trade":
+        st.subheader("Delete Trade")
+        delete_id = st.text_input("Enter Trade ID to delete", placeholder="e.g. TRD001")
+        if st.button("Delete"):
+            if not delete_id.strip():
+                st.warning("Please enter a Trade ID.")
+            else:
+                try:
+                    resp = requests.delete(f"{BASE_URL}/trades/{delete_id.strip()}")
+                    if resp.status_code == 200:
+                        st.success("✅ Trade deleted successfully.")
+                        st.json(resp.json())
+                    elif resp.status_code == 404:
+                        st.warning("Trade not found.")
+                    else:
+                        detail = resp.json().get("detail", resp.text) if resp.headers.get("content-type", "").startswith("application/json") else resp.text
+                        st.error(f"❌ Error ({resp.status_code}): {detail}")
+                except Exception as e:
+                    st.error(f"Failed to connect: {e}")
 
     # ── Get Trade by ID ────────────────────────────────────────────────────────
     elif tsv1_section == "🔍 Get Trade by ID":
