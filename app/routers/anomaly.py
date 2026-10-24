@@ -35,6 +35,30 @@ def get_trade_anomalies():
 
             result["category"] = "UNUSUAL_COUNTERPARTY_PORTFOLIO"
 
+            # If this trade/version already has a review, don't surface it again.
+            # This prevents SAFE/UNSAFE reviewed trades from reappearing in scans.
+            review_row = connection.execute(
+                """
+                SELECT review_status, reason, reviewed_at
+                FROM anomaly_reviews
+                WHERE trade_id = ?
+                  AND version = ?
+                  AND category = ?
+                """,
+                (
+                    trade["trade_id"],
+                    trade["version"],
+                    result["category"],
+                )
+            ).fetchone()
+
+            if review_row:
+                continue
+
+            result["review_status"] = None
+            result["review_reason"] = None
+            result["reviewed_at"] = None
+
             anomalies.append(result)
 
         return {
