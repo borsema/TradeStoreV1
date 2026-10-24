@@ -35,6 +35,7 @@ def get_all_trades():
     finally:
         connection.close()
 
+
 @app.post("/trades/expire")
 def expire_trade():
     count = expire_matured_trade()
@@ -42,6 +43,7 @@ def expire_trade():
         "message": "Expiry check completed",
         "trades_marked_expired": count
     }
+
 
 @app.delete("/trades/{trade_id}")
 def delete_trade(trade_id: str):
@@ -67,20 +69,10 @@ def bulk_insert_trades(trades: list[TradeRequest]):
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 
-    except sqlite3.IntegrityError as exc:
-        if "UNIQUE constraint failed" in str(exc):
-            raise HTTPException(
-                status_code=409,
-                detail="A trade with this trade_id already exists",
-            ) from exc
-
-        raise HTTPException(
-            status_code=400,
-            detail="Bulk insert failed; no trades were inserted",
-        ) from exc
 
 # Anomaly router included before the wildcard /trades/{trade_id}
 app.include_router(anomaly.router)
+
 
 @app.get("/trades/{trade_id}")
 def get_trade(trade_id: str):

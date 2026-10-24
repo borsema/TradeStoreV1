@@ -10,35 +10,25 @@ def parse_date(date_text: str) -> date:
     return datetime.strptime(date_text, "%d/%m/%Y").date()
 
 
-def validate_trade(
-    trade: TradeRequest,
-    existing_version: None,
-) -> None:
+def validate_trade(trade: TradeRequest, existing_version: None,) -> None:
     """Validate trade fields, dates, and version rules."""
-
-    if not trade.trade_id.strip():
-        raise ValueError("TRD-003: Trade ID cannot be empty.")
-
-    if trade.version < 1:
-        raise ValueError("TRD-004: Version must be at least 1.")
-
     today = date.today()
 
     maturity_date = parse_date(trade.maturity_date)
     if maturity_date < today:
         raise ValueError(
-            "TRD-001: Maturity Date cannot be earlier than Today."
+            "VAL-001: Maturity Date cannot be earlier than Today."
         )
 
     created_date = parse_date(trade.created_date)
     if created_date > today:
         raise ValueError(
-            "TRD-002: Created Date cannot be in the future."
+            "VAL-002: Created Date cannot be in the future."
         )
 
     if existing_version is not None and trade.version < existing_version:
         raise ValueError(
-            f"TRD-005: Incoming version {trade.version} is lower "
+            f"VAL-003: Incoming version {trade.version} is lower "
             f"than existing version {existing_version}."
         )
 
@@ -56,11 +46,7 @@ def save_trade(trade: TradeRequest):
         ).fetchone()
 
         # Get the existing version, if available.
-        existing_version = (
-            existing_trade["version"]
-            if existing_trade is not None
-            else None
-        )
+        existing_version = (existing_trade["version"] if existing_trade is not None else None )
 
         # Perform all business validations in one function.
         validate_trade(trade, existing_version)
@@ -118,7 +104,6 @@ def save_trade(trade: TradeRequest):
         connection.close()
 
 
-
 def expire_matured_trade():
     """Mark trades as expired when their maturity date has passed."""
 
@@ -158,7 +143,6 @@ def expire_matured_trade():
 
     finally:
         connection.close()
-
 
 
 def delete_trade(trade_id: str) -> bool:

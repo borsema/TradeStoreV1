@@ -42,7 +42,7 @@ def detect_anomaly(trade: dict) -> dict:
             (counterparty_id, portfolio_id), 0
         ),
     }])
-
+    print("features##",features)
     features = np.log1p(features)
 
     # Ask Isolation Forest to score the trade.
@@ -52,6 +52,7 @@ def detect_anomaly(trade: dict) -> dict:
     unseen_counterparty = (
         counterparty_counts.get(counterparty_id, 0) == 0
     )
+    unseen_portfolio = (portfolio_counts.get(portfolio_id, 0) == 0)
 
     unseen_pair = (
         pair_counts.get((counterparty_id, portfolio_id), 0) == 0
@@ -59,9 +60,16 @@ def detect_anomaly(trade: dict) -> dict:
 
     is_unusual = (
         prediction == -1
-       or unseen_counterparty
+       or unseen_counterparty or unseen_portfolio
         or unseen_pair
     )
+    print('trade',trade)
+    print('features2',features)
+    print('is_unusual',is_unusual)
+    print('prediction',prediction)
+    print('unseen_counterparty',unseen_counterparty)
+    print('unseen_pair',unseen_pair)
+
 
     return {
         "trade_id": trade["trade_id"],
@@ -74,7 +82,9 @@ def detect_anomaly(trade: dict) -> dict:
         "reason": (
             "New counterparty detected"
             if unseen_counterparty
-            else "Counterparty-portfolio pair not seen in training data"
+            else "New portfolio detected"
+            if unseen_portfolio
+            else "Counterparty-portfolio pair not seen in past"
             if unseen_pair
             else "Isolation Forest identified an unusual pattern"
             if prediction == -1
