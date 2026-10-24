@@ -1,6 +1,5 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
-import sqlite3
 
 from app.database import get_connection, create_tables
 from app.schemas import TradeRequest, TradeResponse

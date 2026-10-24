@@ -75,6 +75,7 @@ def save_trade(trade: TradeRequest):
                 maturity_date = excluded.maturity_date,
                 created_date = excluded.created_date,
                 expired = excluded.expired
+            WHERE excluded.version >= trades.version
             """,
             (
                 trade.trade_id,
