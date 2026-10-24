@@ -33,24 +33,24 @@ def get_trade_anomalies():
             if result["anomaly_status"] != "UNUSUAL":
                 continue
 
-            review_row = connection.execute(
-                """
-                SELECT review_status, reason, reviewed_at
-                FROM anomaly_reviews
-                WHERE trade_id = ?
-                  AND version = ?
-                  AND category = ?
-                """,
-                (
-                    trade["trade_id"],
-                    trade["version"],
-                    "UNUSUAL_COUNTERPARTY_PORTFOLIO"
-                )
-            ).fetchone()
+            # review_row = connection.execute(
+            #     """
+            #     SELECT review_status, reason, reviewed_at
+            #     FROM anomaly_reviews
+            #     WHERE trade_id = ?
+            #       AND version = ?
+            #       AND category = ?
+            #     """,
+            #     (
+            #         trade["trade_id"],
+            #         trade["version"],
+            #         "UNUSUAL_COUNTERPARTY_PORTFOLIO"
+            #     )
+            # ).fetchone()
 
-            result["review_status"] = review_row["review_status"] if review_row else None
-            result["review_reason"] = review_row["reason"] if review_row else None
-            result["reviewed_at"] = review_row["reviewed_at"] if review_row else None
+            # result["review_status"] = review_row["review_status"] if review_row else None
+            # result["review_reason"] = review_row["reason"] if review_row else None
+            # result["reviewed_at"] = review_row["reviewed_at"] if review_row else None
             result["category"] = "UNUSUAL_COUNTERPARTY_PORTFOLIO"
 
             anomalies.append(result)

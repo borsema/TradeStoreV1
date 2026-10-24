@@ -149,3 +149,74 @@ def test_expiry_endpoint(client):
         connection.close()
 
     assert trade["expired"] == "Y"
+
+
+def test_bulk_insert_success(client):
+    response = client.post(
+        "/trades/bulk",
+        json=[
+            make_trade(trade_id="BULK001"),
+            make_trade(trade_id="BULK002"),
+        ],
+    )
+
+    assert response.status_code == 200
+
+    # The API returns the service result as inserted_count.
+    assert response.json()["inserted_count"] == {
+        "success_count": 2,
+        "errors": [],
+    }
+
+    assert client.get("/trades/BULK001").status_code == 200
+    assert client.get("/trades/BULK002").status_code == 200
+
+
+def test_bulk_insert_reports_invalid_trade(client):
+    response = client.post(
+        "/trades/bulk",
+        json=[
+            make_trade(trade_id="BULK003"),
+            make_trade(
+                trade_id="BULK004",
+                maturity_date="01/01/2020",
+            ),
+        ],
+    )
+
+    # Current service collects errors instead of raising ValueError.
+    assert response.status_code == 200
+
+    result = response.json()["inserted_count"]
+    assert result["success_count"] == 1
+    assert len(result["errors"]) == 1
+    assert result["errors"][0]["trade_id"] == "BULK004"
+    assert "TRD-001" in result["errors"][0]["error"]
+
+    # Partial success: the valid trade is saved, invalid trade is not.
+    assert client.get("/trades/BULK003").status_code == 200
+    assert client.get("/trades/BULK004").status_code == 404
+
+def test_delete_existing_trade(client):
+    create_response = client.post(
+        "/trades",
+        json=make_trade("DELETE001"),
+    )
+    assert create_response.status_code in (200, 201)
+
+    response = client.delete("/trades/DELETE001")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "message": "Trade deleted",
+        "deleted": True,
+    }
+
+    assert client.get("/trades/DELETE001").status_code == 404
+
+
+def test_delete_nonexistent_trade(client):
+    response = client.delete("/trades/DOES_NOT_EXIST")
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Trade not found"
