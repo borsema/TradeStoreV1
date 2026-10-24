@@ -191,7 +191,7 @@ def test_bulk_insert_reports_invalid_trade(client):
     assert result["success_count"] == 1
     assert len(result["errors"]) == 1
     assert result["errors"][0]["trade_id"] == "BULK004"
-    assert "TRD-001" in result["errors"][0]["error"]
+    assert "VAL-001" in result["errors"][0]["error"]
 
     # Partial success: the valid trade is saved, invalid trade is not.
     assert client.get("/trades/BULK003").status_code == 200
