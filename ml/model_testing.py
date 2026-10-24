@@ -103,3 +103,48 @@ print(
         ]
     ].head(20)
 )
+
+######Evaluation
+
+
+# 6. Evaluate model performance without actual labels
+
+# Measure 1: Anomaly score distribution
+# Lower decision_function scores indicate more unusual records.
+df["anomaly_score"] = model.decision_function(features)
+
+print("\n========== ANOMALY SCORE DISTRIBUTION ==========")
+
+print(df["anomaly_score"].describe())
+
+print("\nMost unusual trades according to the model:")
+
+print(
+    df.sort_values("anomaly_score")[
+        [
+            "trade_id",
+            "counterparty_id",
+            "portfolio_id",
+            "anomaly_score",
+        ]
+    ].head(10)
+)
+
+
+# Measure 2: Detection rate / anomaly rate
+# Isolation Forest returns -1 for unusual and 1 for normal.
+anomaly_count = int((predictions == -1).sum())
+normal_count = int((predictions == 1).sum())
+total_count = len(predictions)
+
+anomaly_rate = (
+    anomaly_count / total_count * 100
+    if total_count > 0
+    else 0
+)
+
+print("\n========== DETECTION RATE ==========")
+print("Total trades tested:", total_count)
+print("Normal trades detected:", normal_count)
+print("Unusual trades detected:", anomaly_count)
+print(f"Anomaly rate: {anomaly_rate:.2f}%")
