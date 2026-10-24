@@ -375,6 +375,8 @@ with tab_anomaly:
                     "review_status": review_status,
                     "reason":        review_reason.strip(),
                 }
+                # Backend expects: POST /anomalies/{trade_id}/review with JSON keys
+                # version, category, review_status, reason
                 try:
                     resp = requests.post(
                         f"{BASE_URL}/anomalies/{review_trade_id.strip()}/review",
